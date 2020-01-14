@@ -21,7 +21,10 @@ def decode_segmap(label_mask, dataset, plot=False):
     Returns:
         (np.ndarray, optional): the resulting decoded color image.
     """
-    if dataset == 'pascal' or dataset == 'coco':
+    if dataset == 'occ5000':
+        n_classes = 13
+        label_colours = get_occ5000_labels()
+    elif dataset == 'pascal' or dataset == 'coco':
         n_classes = 21
         label_colours = get_pascal_labels()
     elif dataset == 'cityscapes':
@@ -99,3 +102,12 @@ def get_pascal_labels():
                        [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128],
                        [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0],
                        [0, 64, 128]])
+
+def get_occ5000_labels():
+    """Load the mapping that associates occ5000 classes with label colors
+    Returns:
+        np.ndarray with dimensions (13, 3)
+    """
+    return np.asarray([[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
+                    [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
+                    [64, 0, 0], [192, 0, 0], [64, 128, 0], [192, 128, 0],[64, 0, 128]])

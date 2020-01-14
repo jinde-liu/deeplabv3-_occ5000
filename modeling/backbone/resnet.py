@@ -76,6 +76,7 @@ class ResNet(nn.Module):
 
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1, BatchNorm=None):
         downsample = None
+        # If feature map shrinks or channels increase(conv block) built the conv connection between input and output
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes * block.expansion,
@@ -154,9 +155,14 @@ def ResNet101(output_stride, BatchNorm, pretrained=True):
     return model
 
 if __name__ == "__main__":
+    from tensorboardX import SummaryWriter
     import torch
-    model = ResNet101(BatchNorm=nn.BatchNorm2d, pretrained=True, output_stride=8)
+    model = ResNet101(output_stride=16, BatchNorm=nn.BatchNorm2d, pretrained=True)
+    writer = SummaryWriter('/home/kidd/Documents/pycharmdoc/runs/resnet')
+    model.eval()
     input = torch.rand(1, 3, 512, 512)
+    writer.add_graph(model, input)
+    writer.close()
     output, low_level_feat = model(input)
     print(output.size())
     print(low_level_feat.size())

@@ -18,15 +18,20 @@ class VOCSegmentation(Dataset):
                  base_dir=Path.db_root_dir('pascal'),
                  split='train',
                  ):
-        """
-        :param base_dir: path to VOC dataset directory
-        :param split: train/val
-        :param transform: transform to apply
+        """Set image id, image path and annotation
+
+        base_dir: path to VOC dataset directory
+        split: train/val
+        transform: transform to apply
+
+        self.im_ids -- image id
+        self.images -- image path
+        self.categories -- annotation
         """
         super().__init__()
         self._base_dir = base_dir
-        self._image_dir = os.path.join(self._base_dir, 'JPEGImages')
-        self._cat_dir = os.path.join(self._base_dir, 'SegmentationClass')
+        self._image_dir = os.path.join(self._base_dir, 'JPEGImages') #image dir
+        self._cat_dir = os.path.join(self._base_dir, 'SegmentationClass') #class annotation dir
 
         if isinstance(split, str):
             self.split = [split]
@@ -35,7 +40,7 @@ class VOCSegmentation(Dataset):
             self.split = split
 
         self.args = args
-
+        # image set list dir
         _splits_dir = os.path.join(self._base_dir, 'ImageSets', 'Segmentation')
 
         self.im_ids = []
@@ -84,7 +89,7 @@ class VOCSegmentation(Dataset):
     def transform_tr(self, sample):
         composed_transforms = transforms.Compose([
             tr.RandomHorizontalFlip(),
-            tr.RandomScaleCrop(base_size=self.args.base_size, crop_size=self.args.crop_size),
+            tr.RandomScaleCrop(base_size=self.args.base_size, crop_size=self.args.crop_size, scale_ratio=self.args.scale_ratio, fill=0),
             tr.RandomGaussianBlur(),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()])
@@ -94,7 +99,7 @@ class VOCSegmentation(Dataset):
     def transform_val(self, sample):
 
         composed_transforms = transforms.Compose([
-            tr.FixScaleCrop(crop_size=self.args.crop_size),
+            tr.FixScaleCrop(crop_size=self.args.crop_size, fill=0),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()])
 
@@ -105,17 +110,16 @@ class VOCSegmentation(Dataset):
 
 
 if __name__ == '__main__':
+    # show random batch_size images and annotaions
     from dataloaders.utils import decode_segmap
     from torch.utils.data import DataLoader
     import matplotlib.pyplot as plt
-    import argparse
+    from args import Args_voc
 
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args()
-    args.base_size = 513
-    args.crop_size = 513
-
-    voc_train = VOCSegmentation(args, split='train')
+    #parser = argparse.ArgumentParser()
+    args = Args_voc()
+    args.crop_size = (513, 513)
+    voc_train = VOCSegmentation(args, split='val')
 
     dataloader = DataLoader(voc_train, batch_size=5, shuffle=True, num_workers=0)
 
@@ -137,7 +141,7 @@ if __name__ == '__main__':
             plt.subplot(212)
             plt.imshow(segmap)
 
-        if ii == 1:
+        if ii == 0:
             break
 
     plt.show(block=True)

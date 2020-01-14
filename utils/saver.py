@@ -3,32 +3,37 @@ import shutil
 import torch
 from collections import OrderedDict
 import glob
+import time
 
 class Saver(object):
-
+    # make save dir in the time format
     def __init__(self, args):
         self.args = args
         self.directory = os.path.join('run', args.dataset, args.checkname)
-        self.runs = sorted(glob.glob(os.path.join(self.directory, 'experiment_*')))
-        run_id = int(self.runs[-1].split('_')[-1]) + 1 if self.runs else 0
+        self.runs = sorted(glob.glob(os.path.join(self.directory, '*')))
+        run_id = time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
 
-        self.experiment_dir = os.path.join(self.directory, 'experiment_{}'.format(str(run_id)))
+        self.experiment_dir = os.path.join(self.directory, run_id)
         if not os.path.exists(self.experiment_dir):
             os.makedirs(self.experiment_dir)
 
     def save_checkpoint(self, state, is_best, filename='checkpoint.pth.tar'):
-        """Saves checkpoint to disk"""
+        """Saves checkpoint to disk and copy it to ./run dir if it is the best
+        state: state dict
+        is_best: if current checkpoint is best copy it to ./run
+        filename: checkpoint file name
+        """
         filename = os.path.join(self.experiment_dir, filename)
         torch.save(state, filename)
         if is_best:
             best_pred = state['best_pred']
+            epoch = state['epoch']
             with open(os.path.join(self.experiment_dir, 'best_pred.txt'), 'w') as f:
                 f.write(str(best_pred))
             if self.runs:
                 previous_miou = [0.0]
                 for run in self.runs:
-                    run_id = run.split('_')[-1]
-                    path = os.path.join(self.directory, 'experiment_{}'.format(str(run_id)), 'best_pred.txt')
+                    path = os.path.join(run, 'best_pred.txt')
                     if os.path.exists(path):
                         with open(path, 'r') as f:
                             miou = float(f.readline())
@@ -37,10 +42,11 @@ class Saver(object):
                         continue
                 max_miou = max(previous_miou)
                 if best_pred > max_miou:
-                    shutil.copyfile(filename, os.path.join(self.directory, 'model_best.pth.tar'))
+                    shutil.copyfile(filename, os.path.join(self.directory, str(epoch)+'-'+str(best_pred)+'-model_best.pth.tar'))
             else:
-                shutil.copyfile(filename, os.path.join(self.directory, 'model_best.pth.tar'))
+                shutil.copyfile(filename, os.path.join(self.directory, str(epoch)+'-'+str(best_pred)+'-model_best.pth.tar'))
 
+    # save parameters in 'parameter.txt' --kidd
     def save_experiment_config(self):
         logfile = os.path.join(self.experiment_dir, 'parameters.txt')
         log_file = open(logfile, 'w')

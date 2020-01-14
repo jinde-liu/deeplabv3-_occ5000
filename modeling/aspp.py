@@ -3,7 +3,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from modeling.sync_batchnorm.batchnorm import SynchronizedBatchNorm2d
-
+###############################################
+# Building the ASPP layer in deeplab v3
+###############################################
 class _ASPPModule(nn.Module):
     def __init__(self, inplanes, planes, kernel_size, padding, dilation, BatchNorm):
         super(_ASPPModule, self).__init__()
@@ -52,6 +54,8 @@ class ASPP(nn.Module):
         self.aspp3 = _ASPPModule(inplanes, 256, 3, padding=dilations[2], dilation=dilations[2], BatchNorm=BatchNorm)
         self.aspp4 = _ASPPModule(inplanes, 256, 3, padding=dilations[3], dilation=dilations[3], BatchNorm=BatchNorm)
 
+        # gloabl_avg_pool extract whole image information, output shape: [batch, 3, 1, 1] then followed by a 1x1 kernal with 256 channls
+        # resulting a shape like [batch, 256, 1, 1]
         self.global_avg_pool = nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                              nn.Conv2d(inplanes, 256, 1, stride=1, bias=False),
                                              BatchNorm(256),
@@ -68,6 +72,7 @@ class ASPP(nn.Module):
         x3 = self.aspp3(x)
         x4 = self.aspp4(x)
         x5 = self.global_avg_pool(x)
+        # upsample the global image pooling to x4.shape and then concatenate
         x5 = F.interpolate(x5, size=x4.size()[2:], mode='bilinear', align_corners=True)
         x = torch.cat((x1, x2, x3, x4, x5), dim=1)
 
@@ -93,3 +98,18 @@ class ASPP(nn.Module):
 
 def build_aspp(backbone, output_stride, BatchNorm):
     return ASPP(backbone, output_stride, BatchNorm)
+
+##########################################################
+# Testing code for aspp.py
+##########################################################
+if __name__ == '__main__':
+    batchnorm = nn.BatchNorm2d
+    aspp_layer = build_aspp('resnet', 16, batchnorm)
+    aspp_layer.eval()
+    for i in aspp_layer.named_modules():
+        print(i)
+        for j in i[1].parameters():
+            print(j)
+    input = torch.randn((1,2048, 33, 33))
+    output = aspp_layer(input)
+    print(output.size())
