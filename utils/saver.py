@@ -28,8 +28,22 @@ class Saver(object):
         if is_best:
             best_pred = state['best_pred']
             epoch = state['epoch']
+            class_miou = state['class_miou']
             with open(os.path.join(self.experiment_dir, 'best_pred.txt'), 'w') as f:
-                f.write(str(best_pred))
+                f.write(str(best_pred) + '\n')
+                f.write('background: {:.2%}\n'.format(class_miou[0]))
+                f.write('hair: {:.2%}\n'.format(class_miou[1]))
+                f.write('face: {:.2%}\n'.format(class_miou[2]))
+                f.write('torso: {:.2%}\n'.format(class_miou[3]))
+                f.write('left_arm: {:.2%}\n'.format(class_miou[4]))
+                f.write('right_arm: {:.2%}\n'.format(class_miou[5]))
+                f.write('left_hand: {:.2%}\n'.format(class_miou[6]))
+                f.write('right_hand: {:.2%}\n'.format(class_miou[7]))
+                f.write('left_leg: {:.2%}\n'.format(class_miou[8]))
+                f.write('right_leg: {:.2%}\n'.format(class_miou[9]))
+                f.write('left_foot: {:.2%}\n'.format(class_miou[10]))
+                f.write('right_foot: {:.2%}\n'.format(class_miou[11]))
+                f.write('accessory: {:.2%}\n'.format(class_miou[12]))
             if self.runs:
                 previous_miou = [0.0]
                 for run in self.runs:

@@ -44,9 +44,9 @@ class Args_occ5000(object):
         self.sync_bn=None
         self.freeze_bn=False
         self.loss_type='ce'
-        self.epochs=100
+        self.epochs=50
         self.start_epoch=0
-        self.batch_size=4
+        self.batch_size=2
         self.test_batch_size=None
         self.use_balanced_weights=False
         self.lr=None
@@ -57,8 +57,9 @@ class Args_occ5000(object):
         self.no_cuda=False
         self.gpu_ids='0'
         self.seed=1
-        self.resume='/home/kidd/kidd1/pytorch-deeplab-xception/run/occ5000/deeplab-resnet/model_best.pth.tar' # path to resume model file
-        self.checkname=None
+        self.resume=None#'/home/kidd/kidd1/pytorch-deeplab-xception/run/occ5000/deeplab_kinematic/2020-01-19-01:06:06/35-0.497667546414435.pth.tar' # path to resume model file
+        self.checkname='deeplab_voc'
         self.ft=False
         self.eval_interval=1 # eval on eval set interval
         self.no_val=False
+        self.use_kinematic=False

@@ -31,7 +31,8 @@ class Trainer(object):
         self.train_loader, self.val_loader, self.test_loader, self.nclass = make_data_loader(args, **kwargs)
 
         # Define network
-        model = DeepLab(num_classes=self.nclass,
+        model = DeepLab(args=self.args,
+                        num_classes=self.nclass,
                         backbone=args.backbone,
                         output_stride=args.out_stride,
                         sync_bn=args.sync_bn,
@@ -92,6 +93,7 @@ class Trainer(object):
             args.start_epoch = 0
 
     def training(self, epoch):
+        global i
         train_loss = 0.0
         self.model.train()
         tbar = tqdm(self.train_loader)
@@ -127,7 +129,7 @@ class Trainer(object):
                 'state_dict': self.model.module.state_dict(),
                 'optimizer': self.optimizer.state_dict(),
                 'best_pred': self.best_pred,
-            }, is_best, filename=str(epoch+1)+'-'+str(new_pred)+'.pth.tar')
+            }, is_best)
 
 
     def validation(self, epoch):
@@ -155,6 +157,7 @@ class Trainer(object):
         Acc_class = self.evaluator.Pixel_Accuracy_Class()
         mIoU = self.evaluator.Mean_Intersection_over_Union()
         FWIoU = self.evaluator.Frequency_Weighted_Intersection_over_Union()
+        class_miou = self.evaluator.Class_Intersection_over_Union()
         self.writer.add_scalar('val/total_loss_epoch', test_loss, epoch)
         self.writer.add_scalar('val/mIoU', mIoU, epoch)
         self.writer.add_scalar('val/Acc', Acc, epoch)
@@ -175,7 +178,8 @@ class Trainer(object):
                 'state_dict': self.model.module.state_dict(),
                 'optimizer': self.optimizer.state_dict(),
                 'best_pred': self.best_pred,
-            }, is_best, filename=str(epoch+1)+'-'+str(new_pred)+'.pth.tar')
+                'class_miou': class_miou
+            }, is_best)
 ################################################################
 #   Train on my occ5000 dataset
 ################################################################
@@ -223,7 +227,7 @@ def main():
 
     if args.checkname is None:
         args.checkname = 'deeplab-'+str(args.backbone)
-    print(args)
+
     torch.manual_seed(args.seed)
     trainer = Trainer(args)
     print('Starting Epoch:', trainer.args.start_epoch)

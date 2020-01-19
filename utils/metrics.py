@@ -22,6 +22,13 @@ class Evaluator(object):
         MIoU = np.nanmean(MIoU)
         return MIoU
 
+    def Class_Intersection_over_Union(self):
+        """Class miou"""
+        MIoU = np.diag(self.confusion_matrix) / (
+                    np.sum(self.confusion_matrix, axis=1) + np.sum(self.confusion_matrix, axis=0) -
+                    np.diag(self.confusion_matrix))
+        return MIoU
+
     def Frequency_Weighted_Intersection_over_Union(self):
         freq = np.sum(self.confusion_matrix, axis=1) / np.sum(self.confusion_matrix)
         iu = np.diag(self.confusion_matrix) / (
@@ -32,6 +39,7 @@ class Evaluator(object):
         return FWIoU
 
     def _generate_matrix(self, gt_image, pre_image):
+        """Generate confusion matrix"""
         mask = (gt_image >= 0) & (gt_image < self.num_class)
         label = self.num_class * gt_image[mask].astype('int') + pre_image[mask]
         count = np.bincount(label, minlength=self.num_class**2)
@@ -39,12 +47,10 @@ class Evaluator(object):
         return confusion_matrix
 
     def add_batch(self, gt_image, pre_image):
+        """Add new confusion matrix"""
         assert gt_image.shape == pre_image.shape
         self.confusion_matrix += self._generate_matrix(gt_image, pre_image)
 
     def reset(self):
+        """Reset confusion matrix"""
         self.confusion_matrix = np.zeros((self.num_class,) * 2)
-
-
-
-

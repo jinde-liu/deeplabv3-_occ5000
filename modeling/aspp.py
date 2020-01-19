@@ -103,6 +103,7 @@ def build_aspp(backbone, output_stride, BatchNorm):
 # Testing code for aspp.py
 ##########################################################
 if __name__ == '__main__':
+
     batchnorm = nn.BatchNorm2d
     aspp_layer = build_aspp('resnet', 16, batchnorm)
     aspp_layer.eval()

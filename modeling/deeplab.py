@@ -3,13 +3,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from modeling.sync_batchnorm.batchnorm import SynchronizedBatchNorm2d
 from modeling.aspp import build_aspp
-from modeling.decoder import build_decoder
+from modeling.decoder import build_decoder_kinematic, build_decoder
 from modeling.backbone import build_backbone
+from modeling.kinematic_graph import build_kinematic_graph
 
 class DeepLab(nn.Module):
-    def __init__(self, backbone='resnet', output_stride=16, num_classes=21,
+    def __init__(self, args, backbone='resnet', output_stride=16, num_classes=21,
                  sync_bn=True, freeze_bn=False):
         super(DeepLab, self).__init__()
+        self.args = args
         if backbone == 'drn':
             output_stride = 8
 
@@ -20,7 +22,11 @@ class DeepLab(nn.Module):
 
         self.backbone = build_backbone(backbone, output_stride, BatchNorm)
         self.aspp = build_aspp(backbone, output_stride, BatchNorm)
-        self.decoder = build_decoder(num_classes, backbone, BatchNorm)
+        if self.args.use_kinematic == False:
+            self.decoder = build_decoder(num_classes, backbone, BatchNorm)
+        else:
+            self.decoder = build_decoder_kinematic(backbone, BatchNorm)
+            self.kinematic_layer = build_kinematic_graph(BatchNorm)
 
         self.freeze_bn = freeze_bn
 
@@ -28,7 +34,11 @@ class DeepLab(nn.Module):
         x, low_level_feat = self.backbone(input)
         x = self.aspp(x)
         x = self.decoder(x, low_level_feat)
-        x = F.interpolate(x, size=input.size()[2:], mode='bilinear', align_corners=True)
+        if self.args.use_kinematic == False:
+            x = F.interpolate(x, size=input.size()[2:], mode='bilinear', align_corners=True)
+        else:
+            x = self.kinematic_layer(x)
+            x = F.interpolate(x, size=input.size()[2:], mode='bilinear', align_corners=True)
 
         return x
 
@@ -72,10 +82,16 @@ class DeepLab(nn.Module):
                                 yield p
 
 if __name__ == "__main__":
-    model = DeepLab(backbone='mobilenet', output_stride=16)
+    from args import Args_occ5000
+    from tensorboardX import SummaryWriter
+    writer = SummaryWriter('/home/kidd/Documents/graph1')
+    args = Args_occ5000()
+    model = DeepLab(args=args, backbone='resnet', output_stride=16)
     model.eval()
     input = torch.rand(1, 3, 513, 513)
     output = model(input)
+    writer.add_graph(model, input)
+    writer.close()
     print(output.size())
 
 
