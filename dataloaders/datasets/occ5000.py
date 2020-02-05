@@ -90,12 +90,22 @@ class Occ5000Segmentation(Dataset):
 
         Note: the mean and std is from imagenet
         """
-        composed_transforms = transforms.Compose([
-            tr.RandomHorizontalFlip(),
-            tr.RandomScaleCrop(base_size=self.args.base_size, crop_size=self.args.crop_size, scale_ratio=self.args.scale_ratio, fill=0),
-            tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            tr.ToTensor()])
-        return composed_transforms(sample)
+        if self.args.no_flip:
+            composed_transforms = transforms.Compose([
+                tr.RandomScaleCrop(base_size=self.args.base_size, crop_size=self.args.crop_size,
+                                   scale_ratio=self.args.scale_ratio, fill=0),
+                tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+                tr.ToTensor()])
+            return composed_transforms(sample)
+        else:
+            composed_transforms = transforms.Compose([
+                tr.RandomHorizontalFlip(),
+                tr.RandomScaleCrop(base_size=self.args.base_size, crop_size=self.args.crop_size,
+                                   scale_ratio=self.args.scale_ratio, fill=0),
+                tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+                tr.ToTensor()])
+            return composed_transforms(sample)
+
 
     def transform_val(self, sample):
         """Transformations for images
@@ -120,8 +130,8 @@ if __name__ == '__main__':
     import args
     args = args.Args_occ5000()
 
-    occ5000_train = Occ5000Segmentation(args, split='val_all2500')
-    data_loader = DataLoader(occ5000_train, batch_size=5, shuffle=True)
+    occ5000_train = Occ5000Segmentation(args, split='train_all2500')
+    data_loader = DataLoader(occ5000_train, batch_size=args.batch_size, shuffle=True)
 
     for i, sample in enumerate(data_loader):
         for j in range(sample['image'].size()[0]):
@@ -138,7 +148,7 @@ if __name__ == '__main__':
             plt.subplot(1,2,2)
             plt.imshow(seg_map)
         
-        if i == 0:
+        if i == 1:
             break
     plt.show()
 
