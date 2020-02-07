@@ -215,5 +215,6 @@ if __name__ == '__main__':
     kp = build_kinematic_graph(batchnorm)
     input = torch.randn(1,304, 33, 33)
     writer.add_graph(kp, input)
+    writer.close()
     output = kp(input)
     print(output.shape)

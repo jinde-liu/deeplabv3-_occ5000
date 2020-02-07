@@ -45,9 +45,6 @@ class Args_occ5000(object):
         self.sync_bn = None
         self.freeze_bn = False
         self.loss_type = 'ce'
-        self.epochs = 100
-        self.start_epoch = 0
-        self.batch_size = 2
         self.test_batch_size = None
         self.use_balanced_weights = False
         self.lr = None
@@ -56,12 +53,16 @@ class Args_occ5000(object):
         self.weight_decay = 5e-4
         self.nesterov = False
         self.no_cuda = False
-        self.gpu_ids = '0'
         self.seed = 1
         self.resume = None  # '/home/kidd/kidd1/pytorch-deeplab-xception/run/occ5000/deeplab_kinematic/2020-01-19-01:06:06/35-0.497667546414435.pth.tar' # path to resume model file
-        self.checkname = 'deeplab_v3+_noflip_100_kinematic'
         self.ft = False
-        self.eval_interval = 10  # eval on eval set interval
+        self.eval_interval = 1  # eval on eval set interval
         self.no_val = False
+        # commonly used parameters
         self.use_kinematic = True
         self.no_flip = True  # flip images
+        self.epochs = 50
+        self.checkname = 'deeplab_v3+_noflip_kinematic'
+        self.gpu_ids = '0'
+        self.start_epoch = 0
+        self.batch_size = 2

@@ -7,6 +7,7 @@ from modeling.decoder import build_decoder_kinematic, build_decoder
 from modeling.backbone import build_backbone
 from modeling.kinematic_graph import build_kinematic_graph
 
+
 class DeepLab(nn.Module):
     def __init__(self, args, backbone='resnet', output_stride=16, num_classes=21,
                  sync_bn=True, freeze_bn=False):
@@ -66,7 +67,7 @@ class DeepLab(nn.Module):
                                 yield p
 
     def get_10x_lr_params(self):
-        modules = [self.aspp, self.decoder]
+        modules = [self.aspp, self.decoder, self.kinematic_layer]
         for i in range(len(modules)):
             for m in modules[i].named_modules():
                 if self.freeze_bn:
@@ -81,9 +82,11 @@ class DeepLab(nn.Module):
                             if p.requires_grad:
                                 yield p
 
+
 if __name__ == "__main__":
     from args import Args_occ5000
     from tensorboardX import SummaryWriter
+
     writer = SummaryWriter('/home/kidd/Documents/graph1')
     args = Args_occ5000()
     model = DeepLab(args=args, backbone='resnet', output_stride=16)
@@ -93,5 +96,3 @@ if __name__ == "__main__":
     writer.add_graph(model, input)
     writer.close()
     print(output.size())
-
-
